@@ -53,6 +53,11 @@ public class ApproachDetector {
         return getClosest(neos, limit, startDate, endDate);
     }
 
+    /**
+     * Query a NEO from the NASA API by id
+     * @param id the id of the NEO
+     * @return The NearEarthObject corresponding to the given id
+     */
     private NearEarthObject queryNearEarthObjectById(String id) {
         System.out.println("Check passing of object " + id);
         try {
@@ -88,6 +93,13 @@ public class ApproachDetector {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Check if the closeApproachDate in closeApproachData is withing the startDate - endDate interval
+     * @param closeApproachData
+     * @param startDate the start of the time period
+     * @param endDate the end of the time period
+     * @return whether the date of the approach is within the given interval
+     */
     public static boolean isCloseApproachDateWithinInterval(CloseApproachData closeApproachData, LocalDate startDate, LocalDate endDate) {
         LocalDate closeApproachLocalDate = closeApproachData.getCloseApproachDate()
                 .toInstant().atZone(ZoneId.of("UTC")).toLocalDate();
