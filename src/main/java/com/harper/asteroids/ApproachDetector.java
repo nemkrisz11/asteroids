@@ -11,8 +11,8 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -37,28 +37,35 @@ public class ApproachDetector {
      * @param limit - n
      */
     public List<NearEarthObject> getClosestApproaches(int limit) {
-        List<NearEarthObject> neos = new ArrayList<>(limit);
-        for(String id: nearEarthObjectIds) {
-            try {
-                System.out.println("Check passing of object " + id);
-                Response response = client
-                    .target(NEO_URL + id)
-                    .queryParam("api_key", App.API_KEY)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
-                NearEarthObject neo = mapper.readValue(response.readEntity(String.class), NearEarthObject.class);
-                if (neo.getCloseApproachData() != null) {
-                    neos.add(neo);
-                }
-            } catch (IOException e) {
-                System.err.println("Failed scanning for asteroids: " + e);
-            }
-        }
+        // Send REST API requests in parallel
+        List<CompletableFuture<NearEarthObject>> futureNeos = nearEarthObjectIds.stream()
+                .map(id -> CompletableFuture.supplyAsync(() -> queryNearEarthObjectById(id)))
+                .collect(Collectors.toList());
+
+        List<NearEarthObject> neos = futureNeos.stream()
+                .map(CompletableFuture::join)
+                .filter(neo -> neo.getCloseApproachData() != null)
+                .collect(Collectors.toList());
         System.out.println("Received " + neos.size() + " neos, now sorting");
 
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusWeeks(1);
         return getClosest(neos, limit, startDate, endDate);
+    }
+
+    private NearEarthObject queryNearEarthObjectById(String id) {
+        System.out.println("Check passing of object " + id);
+        try {
+            Response response = client
+                    .target(NEO_URL + id)
+                    .queryParam("api_key", App.API_KEY)
+                    .request(MediaType.APPLICATION_JSON)
+                    .get();
+            return mapper.readValue(response.readEntity(String.class), NearEarthObject.class);
+        } catch (IOException e) {
+            System.err.println("Failed scanning for asteroids: " + e);
+            return null;
+        }
     }
 
     /**
