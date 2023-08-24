@@ -1,6 +1,7 @@
 package com.harper.asteroids;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.harper.asteroids.model.CloseApproachData;
 import com.harper.asteroids.model.NearEarthObject;
 
 import javax.ws.rs.client.Client;
@@ -8,6 +9,8 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,31 +46,46 @@ public class ApproachDetector {
                     .queryParam("api_key", App.API_KEY)
                     .request(MediaType.APPLICATION_JSON)
                     .get();
-
                 NearEarthObject neo = mapper.readValue(response.readEntity(String.class), NearEarthObject.class);
-                neos.add(neo);
+                if (neo.getCloseApproachData() != null) {
+                    neos.add(neo);
+                }
             } catch (IOException e) {
                 System.err.println("Failed scanning for asteroids: " + e);
             }
         }
         System.out.println("Received " + neos.size() + " neos, now sorting");
 
-        return getClosest(neos, limit);
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = startDate.plusWeeks(1);
+        return getClosest(neos, limit, startDate, endDate);
     }
 
     /**
      * Get the closest passing.
      * @param neos the NearEarthObjects
      * @param limit
+     * @param startDate the start of the time period
+     * @param endDate the end of the time period
      * @return
      */
-    public static List<NearEarthObject> getClosest(List<NearEarthObject> neos, int limit) {
-        //TODO: Should ignore the passes that are not today/this week.
+    public static List<NearEarthObject> getClosest(List<NearEarthObject> neos, int limit, LocalDate startDate, LocalDate endDate) {
+        // Filter out close approaches that do not happen in the given interval
+        neos.forEach(neo -> neo.getCloseApproachData()
+                .removeIf(data -> ! isCloseApproachDateWithinInterval(data, startDate, endDate)));
+
         return neos.stream()
                 .filter(neo -> neo.getCloseApproachData() != null && ! neo.getCloseApproachData().isEmpty())
                 .sorted(new VicinityComparator())
                 .limit(limit)
                 .collect(Collectors.toList());
+    }
+
+    public static boolean isCloseApproachDateWithinInterval(CloseApproachData closeApproachData, LocalDate startDate, LocalDate endDate) {
+        LocalDate closeApproachLocalDate = closeApproachData.getCloseApproachDate()
+                .toInstant().atZone(ZoneId.of("UTC")).toLocalDate();
+        return (closeApproachLocalDate.isEqual(startDate) || closeApproachLocalDate.isAfter(startDate)) &&
+                (closeApproachLocalDate.isEqual(endDate) ||closeApproachLocalDate.isBefore(endDate));
     }
 
 }
