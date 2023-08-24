@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 
 public class TestVicinityComparator {
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = App.getObjectMapper();
     private NearEarthObject neo1, neo2;
 
     @Before

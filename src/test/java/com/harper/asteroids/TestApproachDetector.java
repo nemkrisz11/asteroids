@@ -12,7 +12,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TestApproachDetector {
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = App.getObjectMapper();
     private NearEarthObject neo1, neo2;
 
     @Before

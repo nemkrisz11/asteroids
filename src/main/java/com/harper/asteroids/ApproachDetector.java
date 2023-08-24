@@ -22,7 +22,7 @@ public class ApproachDetector {
     private static final String NEO_URL = "https://api.nasa.gov/neo/rest/v1/neo/";
     private List<String> nearEarthObjectIds;
     private Client client;
-    private ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = App.getObjectMapper();
 
     public ApproachDetector(List<String> ids) {
         this.nearEarthObjectIds = ids;

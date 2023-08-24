@@ -2,6 +2,7 @@ package com.harper.asteroids.model;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.harper.asteroids.App;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,7 +14,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class TestParsing {
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = App.getObjectMapper();
 
 
     @Before

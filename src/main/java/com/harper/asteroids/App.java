@@ -39,14 +39,16 @@ public class App {
 
     private Client client;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+    public static ObjectMapper getObjectMapper() {
+        return mapper;
+    }
 
     public App() {
-
-
         ClientConfig configuration = new ClientConfig();
         client = ClientBuilder.newClient(configuration);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     /**
@@ -63,7 +65,6 @@ public class App {
                 .get();
         System.out.println("Got response: " + response);
         if(response.getStatus() == Response.Status.OK.getStatusCode()) {
-            ObjectMapper mapper = new ObjectMapper();
             String content = response.readEntity(String.class);
 
 
